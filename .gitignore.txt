@@ -1,0 +1,29 @@
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Node.js / React
+node_modules/
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# SQLite databases
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
