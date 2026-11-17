@@ -14,6 +14,12 @@ pipeline {
             defaultValue: false,
             description: 'Activar SOLO tras comprobar pruebas, permisos y respaldo de main.'
         )
+
+        booleanParam(
+    name: 'TEST_FAILURE',
+    defaultValue: false,
+    description: 'Simular fallo para probar el correo FAILURE'
+)
         string(
             name: 'EMAIL_TO',
             defaultValue: '',
@@ -86,6 +92,17 @@ pipeline {
                 '''
             }
         }
+
+
+stage('Probar correo FAILURE') {
+    when {
+        expression { params.TEST_FAILURE == true }
+    }
+    steps {
+        error('Fallo controlado para verificar el correo FAILURE')
+    }
+}
+
 
         stage('Promover STG a MAIN') {
             when {
