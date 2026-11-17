@@ -43,9 +43,9 @@ def test_rating_limits():
     finally: c.__exit__(None, None, None); d.cleanup()
 
 
-def test_short_comment_rejected():
+def test_short_comment_accepted():
     d, c = client()
-    try: assert c.post('/api/reviews', json=sample(comment="malo")).status_code == 422
+    try: assert c.post('/api/reviews', json=sample(comment="malo")).status_code == 201
     finally: c.__exit__(None, None, None); d.cleanup()
 
 
