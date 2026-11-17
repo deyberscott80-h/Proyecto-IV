@@ -92,6 +92,10 @@ pipeline {
         }
 
         stage('Compilar React') {
+
+            environment {
+    VITE_API_URL = 'http://127.0.0.1:8000'
+}
             steps {
                 powershell '''
                     $ErrorActionPreference = 'Stop'
@@ -220,6 +224,59 @@ stage('Promover STG a MAIN') {
                     Write-Host 'PROMOCION COMPLETADA CORRECTAMENTE'
                 '''
             }
+        }
+    }
+}
+
+stage('Publicar React en IIS por FTP') {
+    when {
+        expression { params.PROMOTE_TO_MAIN == true }
+    }
+
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'iis-ftp',
+                usernameVariable: 'FTP_USER',
+                passwordVariable: 'FTP_PASS'
+            )
+        ]) {
+            powershell '''
+                $ErrorActionPreference = 'Stop'
+
+                $dist = Join-Path $env:WORKSPACE 'frontend\\dist'
+
+                if (-not (Test-Path (Join-Path $dist 'index.html'))) {
+                    throw "No existe frontend/dist/index.html"
+                }
+
+                $archivos = Get-ChildItem -Path $dist -Recurse -File
+
+                foreach ($archivo in $archivos) {
+                    $rutaRelativa = $archivo.FullName.Substring(
+                        $dist.Length
+                    ).TrimStart('\\').Replace('\\', '/')
+
+                    $url = "ftp://127.0.0.1/$rutaRelativa"
+
+                    & curl.exe `
+                        --silent `
+                        --show-error `
+                        --fail `
+                        --ftp-create-dirs `
+                        --user "${env:FTP_USER}:${env:FTP_PASS}" `
+                        --upload-file $archivo.FullName `
+                        $url
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Error FTP al subir: $rutaRelativa"
+                    }
+
+                    Write-Host "Publicado: $rutaRelativa"
+                }
+
+                Write-Host "PUBLICACION FTP COMPLETADA"
+            '''
         }
     }
 }

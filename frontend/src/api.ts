@@ -1,7 +1,12 @@
 import type { NewReview, Review, ReviewStats } from './types';
 
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || ''
+).replace(/\/$/, '');
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetch(`${API_BASE_URL}${url}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   });
