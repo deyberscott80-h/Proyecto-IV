@@ -282,7 +282,7 @@ export function App() {
         </div>
 
         <p className="side-caption">
-          PANEL DE DEMOSTRACIÓN
+          PANEL DE DEMOSTRACIÓN- Defensa2
         </p>
 
         <nav aria-label="Administración">
