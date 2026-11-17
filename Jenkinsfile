@@ -159,87 +159,71 @@ pipeline {
             }
         }
 
-        stage('Promover STG a MAIN') {
-            when {
-                expression {
-                    return params.PROMOTE_TO_MAIN == true
-                }
-            }
+        
+stage('Promover STG a MAIN') {
+    when {
+        expression {
+            return params.PROMOTE_TO_MAIN == true
+        }
+    }
 
-            steps {
-                timeout(time: 3, unit: 'MINUTES') {
+    steps {
+        timeout(time: 3, unit: 'MINUTES') {
+            withCredentials([
+                gitUsernamePassword(
+                    credentialsId: 'github-ci-push',
+                    gitToolName: 'Default'
+                )
+            ]) {
+                powershell '''
+                    $ErrorActionPreference = 'Stop'
 
-                    withCredentials([
-                        gitUsernamePassword(
-                            credentialsId: 'github-ci-push',
-                            gitToolName: 'Default'
-                        )
-                    ]) {
+                    # Impedir solicitudes interactivas
+                    $env:GIT_TERMINAL_PROMPT = '0'
+                    $env:GCM_INTERACTIVE = 'never'
 
-                        bat '''
-                            @echo off
+                    Write-Host 'PASO 1: PowerShell iniciado'
+                    Write-Host "Directorio: $(Get-Location)"
 
-                            REM Evitar solicitudes interactivas de Git
-                            set GIT_TERMINAL_PROMPT=0
-                            set GCM_INTERACTIVE=never
+                    git --version
 
-                            echo ==========================================
-                            echo PROMOCION AUTOMATICA STG A MAIN
-                            echo ==========================================
-
-                            echo.
-                            echo PASO 1: Verificando credenciales Git...
-
-                            if not defined GIT_ASKPASS (
-                                echo ERROR: Jenkins no proporciono GIT_ASKPASS.
-                                exit /b 1
-                            )
-
-                            echo OK: Autenticacion de Jenkins disponible.
-
-                            echo.
-                            echo PASO 2: Consultando rama MAIN...
-
-                            git -c credential.helper= fetch origin main
-
-                            if errorlevel 1 (
-                                echo ERROR: No fue posible consultar MAIN.
-                                exit /b 1
-                            )
-
-                            echo.
-                            echo PASO 3: Verificando historial de ramas...
-
-                            git merge-base --is-ancestor origin/main HEAD
-
-                            if errorlevel 1 (
-                                echo ERROR: MAIN tiene cambios que requieren revision.
-                                echo Promocion cancelada para proteger el repositorio.
-                                exit /b 1
-                            )
-
-                            echo OK: MAIN puede avanzar a STG.
-
-                            echo.
-                            echo PASO 4: Enviando cambios a MAIN...
-
-                            git -c credential.helper= push origin HEAD:refs/heads/main
-
-                            if errorlevel 1 (
-                                echo ERROR: No fue posible actualizar MAIN.
-                                echo Revise permisos o proteccion de ramas.
-                                exit /b 1
-                            )
-
-                            echo.
-                            echo ==========================================
-                            echo PROMOCION COMPLETADA CORRECTAMENTE
-                            echo ==========================================
-                        '''
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'Git no esta disponible.'
                     }
-                }
+
+                    Write-Host 'PASO 2: Consultando MAIN'
+
+                    git -c credential.helper= fetch origin '+refs/heads/main:refs/remotes/origin/main'
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'No se pudo consultar MAIN.'
+                    }
+
+                    Write-Host 'PASO 3: Verificando historial'
+
+                    git merge-base --is-ancestor origin/main HEAD
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'MAIN tiene cambios incompatibles con STG. Promocion cancelada.'
+                    }
+
+                    Write-Host 'OK: Historial compatible.'
+
+                    Write-Host 'PASO 4: Enviando STG a MAIN'
+
+                    git -c credential.helper= push origin HEAD:refs/heads/main
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw 'GitHub rechazo la actualizacion de MAIN.'
+                    }
+
+                    Write-Host 'PROMOCION COMPLETADA CORRECTAMENTE'
+                '''
             }
         }
+    }
+}
+
     }
 
     post {
