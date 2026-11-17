@@ -139,5 +139,40 @@ Revisar los archivos unit.xml, selenium.xml y performance.jtl.
                 }
             }
         }
+
+
+success {
+    emailext(
+        to: 'jeremiscott14@gmail.com',
+        subject: "SUCCESS - Proyecto IV - Build #${env.BUILD_NUMBER}",
+        mimeType: 'text/html',
+        body: """
+            <h2>Pipeline ejecutado correctamente</h2>
+            <p>Proyecto IV - Modulo de reseñas</p>
+            <p>Estado: SUCCESS</p>
+            <p>Las pruebas automatizadas finalizaron correctamente.</p>
+            <p>Build: ${env.BUILD_NUMBER}</p>
+            <p><a href="${env.BUILD_URL}">Ver resultados en Jenkins</a></p>
+        """
+    )
+}
+
+failure {
+    emailext(
+        to: 'jeremiscott14@gmail.com',
+        subject: "FAILURE - Proyecto IV - Build #${env.BUILD_NUMBER}",
+        mimeType: 'text/html',
+        attachLog: true,
+        body: """
+            <h2>Error en el Pipeline</h2>
+            <p>Proyecto IV - Modulo de reseñas</p>
+            <p>Estado: FAILURE</p>
+            <p>Alguna etapa de las pruebas automatizadas fallo.</p>
+            <p>Build: ${env.BUILD_NUMBER}</p>
+            <p><a href="${env.BUILD_URL}">Revisar error en Jenkins</a></p>
+        """
+    )
+}
+
     }
 }
