@@ -17,11 +17,20 @@ from selenium.webdriver.support.ui import WebDriverWait
 URL = os.getenv("REVIEWS_URL", "http://127.0.0.1:5173")
 
 
+
 @pytest.fixture
-def driver(request):
+def driver(request, tmp_path):
     options = Options()
+
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1440,950")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+    profile_dir = tmp_path / "edge-profile"
+    options.add_argument(
+        f"--user-data-dir={profile_dir}"
+    )
     browser = webdriver.Edge(options=options)
     browser.get(URL)
     yield browser
