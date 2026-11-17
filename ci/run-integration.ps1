@@ -60,9 +60,22 @@ try {
     if (Test-Path $jtl) { Remove-Item $jtl -Force }
     if (Test-Path $html) { Remove-Item $html -Recurse -Force }
 
-    & $jmeter -n -t $jmx -l $jtl -e -o $html `
-        -Jhost=127.0.0.1 -Jport=8000 -Jusers=5 -Jloops=10
-    if ($LASTEXITCODE -ne 0) { throw 'JMeter terminó con error.' }
+    
+$jmeterArgs = '-n -t "{0}" -l "{1}" -e -o "{2}" -Jhost=localhost -Jport=8000 -Jusers=5 -Jloops=10' -f $jmx, $jtl, $html
+
+Write-Host "Ejecutando JMeter..."
+
+$process = Start-Process `
+    -FilePath $jmeter `
+    -ArgumentList $jmeterArgs `
+    -NoNewWindow `
+    -Wait `
+    -PassThru
+git
+if ($process.ExitCode -ne 0) {
+    throw "JMeter terminó con error: $($process.ExitCode)"
+}
+
 
     python ci/check-performance.py $jtl
     if ($LASTEXITCODE -ne 0) { throw 'JMeter reportó solicitudes fallidas.' }
