@@ -1,7 +1,7 @@
-// Pipeline para Windows: rama STG -> pruebas -> MAIN (solo si pasan).
-// Este es el flujo de UN repositorio; el PDF también exige repositorios separados.
 pipeline {
-    agent any
+    agent {
+        label 'windows-browser'
+    }
 
     options {
         disableConcurrentBuilds()
